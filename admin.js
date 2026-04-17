@@ -16,17 +16,25 @@ async function loadUsers() {
     }
   });
 
+  if (!res.ok) {
+    alert("GitHub error: " + res.status);
+    return;
+  }
+
   const file = await res.json();
   const data = JSON.parse(atob(file.content || ""));
 
   const box = document.getElementById("users");
   box.innerHTML = "";
 
+  if (!data.users.length) {
+    box.innerHTML = "<p>No users found</p>";
+    return;
+  }
+
   data.users.forEach(u => {
     const div = document.createElement("div");
-    div.style.border = "1px solid #ddd";
-    div.style.padding = "10px";
-    div.style.margin = "10px";
+    div.className = "card";
 
     div.innerHTML = `
       <b>Email:</b> ${u.email}<br>

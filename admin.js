@@ -1,7 +1,7 @@
 const repo = "YOUR_USERNAME/YOUR_REPO";
 const token = "YOUR_GITHUB_TOKEN";
 
-// admin protection
+// protect admin
 if (localStorage.getItem("role") !== "admin") {
   alert("Access denied");
   window.location.href = "index.html";
@@ -9,15 +9,22 @@ if (localStorage.getItem("role") !== "admin") {
 
 async function loadUsers() {
   try {
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/data/users.json`, {
+    const url = `https://api.github.com/repos/${repo}/contents/data/users.json`;
+
+    const res = await fetch(url, {
       headers: {
-        Authorization: `token ${token}`
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json"
       }
     });
 
+    if (!res.ok) {
+      throw new Error("GitHub API failed: " + res.status);
+    }
+
     const file = await res.json();
 
-    const data = JSON.parse(atob(file.content));
+    const data = JSON.parse(atob(file.content || ""));
 
     const box = document.getElementById("users");
     box.innerHTML = "";
@@ -41,8 +48,8 @@ async function loadUsers() {
     });
 
   } catch (err) {
-    console.log(err);
-    alert("Failed to load users. Check token/repo/file.");
+    console.error(err);
+    alert("Failed to load users. Check repo, token, or file path.");
   }
 }
 

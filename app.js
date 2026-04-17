@@ -1,79 +1,104 @@
 const repo = "YOUR_USERNAME/YOUR_REPO";
 const token = "YOUR_GITHUB_TOKEN";
 
-// ADMIN LOGIN
-const ADMIN = {
-  email: "admin@gmail.com",
-  password: "admin123"
-};
+// ADMIN ACCOUNT
+const ADMIN_EMAIL = "admin@gmail.com";
+const ADMIN_PASS = "admin123";
 
 async function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
-    alert("Fill all fields");
+    alert("Please enter email and password");
     return;
   }
 
-  // ADMIN CHECK
-  if (email === ADMIN.email && password === ADMIN.password) {
+  // =========================
+  // 1. ADMIN LOGIN
+  // =========================
+  if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
     localStorage.setItem("role", "admin");
-    alert("Admin login successful");
+    alert("Admin login successful ✔");
     window.location.href = "admin.html";
     return;
   }
 
-  const url = `https://api.github.com/repos/${repo}/contents/data/users.json`;
+  // =========================
+  // 2. USER LOGIN / REGISTER
+  // =========================
+  try {
+    const url = `https://api.github.com/repos/${repo}/contents/data/users.json`;
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `token ${token}`,
-      Accept: "application/vnd.github.v3+json"
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json"
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("GitHub API error: " + res.status);
     }
-  });
 
-  const file = await res.json();
-  const data = JSON.parse(atob(file.content || ""));
+    const file = await res.json();
 
-  if (!data.users) data.users = [];
+    const decoded = JSON.parse(atob(file.content || ""));
 
-  // CHECK EXISTING USER
-  let user = data.users.find(u => u.email === email);
+    if (!decoded.users) decoded.users = [];
 
-  if (user) {
-    if (user.password !== password) {
-      alert("Wrong password");
-      return;
+    // check if user exists
+    let user = decoded.users.find(u => u.email === email);
+
+    if (user) {
+      // existing user login check
+      if (user.password !== password) {
+        alert("Wrong password ❌");
+        return;
+      }
+    } else {
+      // new user registration
+      user = {
+        email,
+        password,
+        time: new Date().toISOString()
+      };
+
+      decoded.users.push(user);
     }
-  } else {
-    user = {
-      email,
-      password,
-      time: new Date().toISOString()
-    };
-    data.users.push(user);
+
+    const updatedContent = btoa(JSON.stringify(decoded, null, 2));
+
+    const updateRes = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "user login/register",
+        content: updatedContent,
+        sha: file.sha
+      })
+    });
+
+    // =========================
+    // SUCCESS CHECK (IMPORTANT)
+    // =========================
+    if (updateRes.ok) {
+      alert("Login successful! Data saved ✔");
+
+      localStorage.setItem("role", "user");
+      localStorage.setItem("user", email);
+
+      window.location.href = "user.html";
+    } else {
+      alert("Failed to save data ❌");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Error: Check repo name, token, or users.json file");
   }
-
-  const updated = btoa(JSON.stringify(data, null, 2));
-
-  await fetch(url, {
-    method: "PUT",
-    headers: {
-      Authorization: `token ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: "update users",
-      content: updated,
-      sha: file.sha
-    })
-  });
-
-  alert("Login successful ✔");
-
-  localStorage.setItem("role", "user");
-  localStorage.setItem("user", email);
-
-  window.location.href = "user.html";
 }

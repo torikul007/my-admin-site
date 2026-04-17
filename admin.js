@@ -1,56 +1,28 @@
-const repo = "YOUR_USERNAME/YOUR_REPO";
-const token = "YOUR_GITHUB_TOKEN";
-
-// protect admin
-if (localStorage.getItem("role") !== "admin") {
-  alert("Access denied");
-  window.location.href = "index.html";
-}
-
-async function loadUsers() {
-  try {
-    const url = `https://api.github.com/repos/${repo}/contents/data/users.json`;
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json"
-      }
-    });
-
-    if (!res.ok) {
-      throw new Error("GitHub API failed: " + res.status);
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <style>
+    body{font-family:Arial;padding:20px;}
+    .card{
+      border:1px solid #ddd;
+      padding:10px;
+      margin:10px;
+      border-radius:8px;
     }
-
-    const file = await res.json();
-
-    const data = JSON.parse(atob(file.content || ""));
-
-    const box = document.getElementById("users");
-    box.innerHTML = "";
-
-    if (!data.users || data.users.length === 0) {
-      box.innerHTML = "<p>No users found</p>";
-      return;
+    button{
+      margin-top:5px;
+      padding:5px 10px;
     }
+  </style>
+</head>
+<body>
 
-    data.users.forEach(u => {
-      const div = document.createElement("div");
-      div.className = "card";
+<h2>Admin Panel (PRO)</h2>
+<button onclick="loadUsers()">Refresh</button>
 
-      div.innerHTML = `
-        <b>Email:</b> ${u.email}<br>
-        <b>Password:</b> ${u.password}<br>
-        <b>Time:</b> ${u.time}
-      `;
+<div id="users"></div>
 
-      box.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load users. Check repo, token, or file path.");
-  }
-}
-
-loadUsers();
+<script src="admin.js"></script>
+</body>
+</html>

@@ -5,11 +5,11 @@
   <style>
     body {
       font-family: Arial;
-      height: 100vh;
+      background: linear-gradient(120deg,#4f46e5,#06b6d4);
+      height:100vh;
       display:flex;
       justify-content:center;
       align-items:center;
-      background: linear-gradient(120deg,#4f46e5,#06b6d4);
     }
 
     .box {
@@ -31,13 +31,14 @@
       background:#4f46e5;
       color:white;
       border:none;
+      cursor:pointer;
     }
   </style>
 </head>
 <body>
 
 <div class="box">
-  <h2>Login</h2>
+  <h2>Login System</h2>
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
   <button onclick="login()">Login</button>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>User Page</title>
+  <title>User Dashboard</title>
 </head>
 <body>
 
@@ -9,12 +9,10 @@
 <p id="info"></p>
 
 <script>
-  const role = localStorage.getItem("role");
   const user = localStorage.getItem("user");
+  const role = localStorage.getItem("role");
 
-  if (!user) {
-    window.location.href = "index.html";
-  }
+  if (!user) window.location.href = "index.html";
 
   document.getElementById("info").innerText =
     "Logged in as: " + user + " (" + role + ")";

@@ -1,5 +1,5 @@
 const repo = "YOUR_USERNAME/YOUR_REPO";
-const token = "YOUR_NEW_TOKEN"; // <-- paste your NEW token here ONLY
+const token = "YOUR_NEW_TOKEN"; // ⚠️ must be NEW token
 
 const ADMIN_EMAIL = "admin@gmail.com";
 const ADMIN_PASS = "admin123";
@@ -16,7 +16,7 @@ async function login() {
   // ================= ADMIN LOGIN =================
   if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
     localStorage.setItem("role", "admin");
-    alert("Admin login successful ✔");
+    alert("Admin login success ✔");
     window.location.href = "admin.html";
     return;
   }
@@ -24,6 +24,7 @@ async function login() {
   const url = `https://api.github.com/repos/${repo}/contents/data/users.json`;
 
   try {
+    // GET FILE
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -32,7 +33,7 @@ async function login() {
     });
 
     if (!res.ok) {
-      alert("GitHub error: " + res.status);
+      alert("GitHub error (GET): " + res.status);
       return;
     }
 
@@ -41,7 +42,7 @@ async function login() {
 
     if (!data.users) data.users = [];
 
-    // check existing user
+    // check user
     let user = data.users.find(u => u.email === email);
 
     if (user) {
@@ -50,16 +51,16 @@ async function login() {
         return;
       }
     } else {
-      user = {
+      data.users.push({
         email,
         password,
         time: new Date().toISOString()
-      };
-      data.users.push(user);
+      });
     }
 
     const updated = btoa(JSON.stringify(data, null, 2));
 
+    // UPDATE FILE
     const updateRes = await fetch(url, {
       method: "PUT",
       headers: {
@@ -74,17 +75,20 @@ async function login() {
       })
     });
 
-    if (updateRes.ok) {
-      alert("Login successful ✔ Data saved!");
-      localStorage.setItem("role", "user");
-      localStorage.setItem("user", email);
-      window.location.href = "user.html";
-    } else {
-      alert("Failed to save data ❌");
+    if (!updateRes.ok) {
+      alert("GitHub error (UPDATE): " + updateRes.status);
+      return;
     }
+
+    alert("Login successful ✔ Data saved");
+
+    localStorage.setItem("role", "user");
+    localStorage.setItem("user", email);
+
+    window.location.href = "user.html";
 
   } catch (err) {
     console.error(err);
-    alert("Error connecting to GitHub API");
+    alert("Network / Token error. Check repo + token + permissions.");
   }
 }

